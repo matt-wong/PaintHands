@@ -19,8 +19,6 @@ const DEFAULTS: Adjustments = {
   temperature: 0,
 };
 
-const MOCK_TOOLS = ["Grayscale", "Posterize", "Flip", "Grid"];
-
 type Props = {
   image: ImageResult;
   onClose: () => void;
@@ -28,6 +26,7 @@ type Props = {
 
 function ImageModal({ image, onClose }: Props) {
   const [adjust, setAdjust] = useState<Adjustments>(DEFAULTS);
+  const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -60,10 +59,13 @@ function ImageModal({ image, onClose }: Props) {
           </filter>
         </svg>
 
-        <img src={image.url} alt={image.title} style={{ filter }} />
+        <img
+          src={image.url}
+          alt={image.title}
+          style={{ filter, transform: flipped ? "scaleX(-1)" : undefined }}
+        />
 
         <aside className="controls">
-          <h2>{image.title}</h2>
           {SLIDERS.map(({ key, label, min, max }) => (
             <label key={key}>
               {label}: {adjust[key]}
@@ -79,13 +81,16 @@ function ImageModal({ image, onClose }: Props) {
             </label>
           ))}
           <div className="tools">
-            {/* Mock tools: not wired to the image yet */}
-            {MOCK_TOOLS.map((label) => (
-              <button key={label} type="button">
-                {label}
-              </button>
-            ))}
-            <button type="button" onClick={() => setAdjust(DEFAULTS)}>
+            <button type="button" onClick={() => setFlipped(!flipped)}>
+              Flip
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAdjust(DEFAULTS);
+                setFlipped(false);
+              }}
+            >
               Reset
             </button>
           </div>

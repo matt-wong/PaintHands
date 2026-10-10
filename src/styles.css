@@ -125,12 +125,6 @@ button {
   overflow-y: auto;
 }
 
-.controls h2 {
-  margin: 0;
-  font-size: 1em;
-  overflow-wrap: anywhere;
-}
-
 .controls label {
   display: flex;
   flex-direction: column;
