@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import type { ImageResult } from "./types";
+import AdjustedImage from "./AdjustedImage";
+import type { Adjustments, ImageResult, PinnedImage } from "./types";
 
 const SLIDERS = [
   { key: "saturation", label: "Saturation", min: -100, max: 100 },
@@ -8,8 +9,6 @@ const SLIDERS = [
   { key: "contrast", label: "Contrast", min: -100, max: 100 },
   { key: "temperature", label: "Temperature", min: -100, max: 100 },
 ] as const;
-
-type Adjustments = Record<(typeof SLIDERS)[number]["key"], number>;
 
 const DEFAULTS: Adjustments = {
   saturation: 0,
@@ -21,12 +20,16 @@ const DEFAULTS: Adjustments = {
 
 type Props = {
   image: ImageResult;
+  // Set when the image is already pinned, so its saved alterations are restored
+  pinned?: PinnedImage;
+  onPin: (pin: PinnedImage) => void;
+  onUnpin: () => void;
   onClose: () => void;
 };
 
-function ImageModal({ image, onClose }: Props) {
-  const [adjust, setAdjust] = useState<Adjustments>(DEFAULTS);
-  const [flipped, setFlipped] = useState(false);
+function ImageModal({ image, pinned, onPin, onUnpin, onClose }: Props) {
+  const [adjust, setAdjust] = useState<Adjustments>(pinned?.adjust ?? DEFAULTS);
+  const [flipped, setFlipped] = useState(pinned?.flipped ?? false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -36,33 +39,14 @@ function ImageModal({ image, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // CSS has no temperature filter, so warm/cool is an SVG color matrix that
-  // boosts red and cuts blue (or the reverse)
-  const warmth = (adjust.temperature / 100) * 0.3;
-  const filter = [
-    "url(#temperature)",
-    `saturate(${1 + adjust.saturation / 100})`,
-    `hue-rotate(${adjust.hue}deg)`,
-    `brightness(${1 + adjust.brightness / 100})`,
-    `contrast(${1 + adjust.contrast / 100})`,
-  ].join(" ");
-
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <svg width="0" height="0" style={{ position: "absolute" }}>
-          <filter id="temperature" colorInterpolationFilters="sRGB">
-            <feColorMatrix
-              type="matrix"
-              values={`${1 + warmth} 0 0 0 0  0 1 0 0 0  0 0 ${1 - warmth} 0 0  0 0 0 1 0`}
-            />
-          </filter>
-        </svg>
-
-        <img
+        <AdjustedImage
           src={image.url}
           alt={image.title}
-          style={{ filter, transform: flipped ? "scaleX(-1)" : undefined }}
+          adjust={adjust}
+          flipped={flipped}
         />
 
         <aside className="controls">
@@ -93,6 +77,19 @@ function ImageModal({ image, onClose }: Props) {
             >
               Reset
             </button>
+          </div>
+          <div className="tools">
+            <button
+              type="button"
+              onClick={() => onPin({ image, adjust, flipped })}
+            >
+              {pinned ? "Update pin" : "Pin"}
+            </button>
+            {pinned && (
+              <button type="button" onClick={onUnpin}>
+                Unpin
+              </button>
+            )}
           </div>
           <button type="button" onClick={onClose}>
             Close
