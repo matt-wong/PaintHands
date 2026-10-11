@@ -81,16 +81,19 @@ function App() {
         <section>
           <h2>Pinned</h2>
           <div className="results">
-            {pinned.map(({ image, adjust, flipped }) => (
-              <figure key={image.id} onClick={() => setSelected(image)}>
-                <AdjustedImage
-                  src={image.thumbnail}
-                  alt={image.title}
-                  adjust={adjust}
-                  flipped={flipped}
-                />
-                <footer>{image.source}</footer>
-              </figure>
+            {pinned.map(({ image, adjust, flipped }, index) => (
+              <div key={image.id}>
+                <span>{index + 1}</span>
+                <figure onClick={() => setSelected(image)}>
+                  <AdjustedImage
+                    src={image.thumbnail}
+                    alt={image.title}
+                    adjust={adjust}
+                    flipped={flipped}
+                  />
+                  <footer>{image.source}</footer>
+                </figure>
+              </div>
             ))}
           </div>
           {results.length > 0 && <h2>Results</h2>}
