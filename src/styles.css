@@ -17,6 +17,7 @@
 .container {
   margin: 0;
   padding-top: 4vh;
+  padding-bottom: 80px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -100,7 +101,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 24px 24px 80px;
   background-color: rgba(0, 0, 0, 0.7);
 }
 
@@ -117,7 +118,7 @@ h2 {
 .modal > img {
   min-width: 0;
   max-width: 100%;
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 136px);
   object-fit: contain;
 }
 
@@ -165,13 +166,61 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.voice-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 999px;
+  background-color: #f6f6f6;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.voice-bar button {
+  padding: 0.4em 1em;
+  border-radius: 999px;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.voice-bar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.voice-item {
+  position: relative;
+}
+
+.voice-menu {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 14px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: max-content;
+  max-width: 280px;
+  padding: 8px;
+  border-radius: 16px;
+  background-color: #f6f6f6;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;
     background-color: #2f2f2f;
   }
 
-  .modal {
+  .modal,
+  .voice-bar,
+  .voice-menu {
     background-color: #2f2f2f;
   }
 

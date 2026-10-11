@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import AdjustedImage from "./AdjustedImage";
-import ImageModal from "./ImageModal";
+import ImageModal, { DEFAULTS } from "./ImageModal";
+import VoiceBar, { numbers, type VoiceCommand } from "./VoiceBar";
 import type { ImageResult, PinnedImage, SearchResponse } from "./types";
 
 const PINNED_STORAGE_KEY = "pinned-images";
@@ -55,6 +56,37 @@ function App() {
       setStatus(`Search failed: ${err instanceof Error ? err.message : err}`);
     }
   }
+
+  // Voice phrases available on the main screen; Pin and Edit only with results showing
+  const commands: VoiceCommand[] = [
+    {
+      label: "Search",
+      run: () =>
+        query.trim()
+          ? search()
+          : document.getElementById("search-input")?.focus(),
+    },
+    {
+      label: "View",
+      options: numbers(pinned.length),
+      run: (choice) => setSelected(pinned[choice].image),
+    },
+    ...(results.length > 0
+      ? [
+          {
+            label: "Pin",
+            options: numbers(results.length),
+            run: (choice: number) =>
+              pin({ image: results[choice], adjust: DEFAULTS, flipped: false }),
+          },
+          {
+            label: "Edit",
+            options: numbers(results.length),
+            run: (choice: number) => setSelected(results[choice]),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <main className="container">
@@ -111,6 +143,8 @@ function App() {
           </div>
         ))}
       </div>
+
+      {!selected && <VoiceBar commands={commands} />}
 
       {selected && (
         <ImageModal

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AdjustedImage from "./AdjustedImage";
+import VoiceBar, { type VoiceCommand } from "./VoiceBar";
 import type { Adjustments, ImageResult, PinnedImage } from "./types";
 
 const SLIDERS = [
@@ -10,7 +11,7 @@ const SLIDERS = [
   { key: "temperature", label: "Temperature", min: -100, max: 100 },
 ] as const;
 
-const DEFAULTS: Adjustments = {
+export const DEFAULTS: Adjustments = {
   saturation: 0,
   hue: 0,
   brightness: 0,
@@ -38,6 +39,26 @@ function ImageModal({ image, pinned, onPin, onUnpin, onClose }: Props) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // Voice phrases available while editing
+  const commands: VoiceCommand[] = [
+    {
+      label: "Saturation",
+      options: ["Low", "Medium", "High"],
+      run: (choice) =>
+        setAdjust({ ...adjust, saturation: [-100, 0, 100][choice] }),
+    },
+    { label: "Flip", run: () => setFlipped(!flipped) },
+    ...(pinned ? [{ label: "Unpin", run: onUnpin }] : []),
+    {
+      label: "Pin",
+      run: () => {
+        onPin({ image, adjust, flipped });
+        onClose();
+      },
+    },
+    { label: "Close", run: onClose },
+  ];
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -96,6 +117,7 @@ function ImageModal({ image, pinned, onPin, onUnpin, onClose }: Props) {
           </button>
         </aside>
       </div>
+      <VoiceBar commands={commands} />
     </div>
   );
 }
