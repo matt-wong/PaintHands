@@ -1,3 +1,5 @@
+mod voice;
+
 use serde::Serialize;
 use serde_json::Value;
 
@@ -141,6 +143,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![search_images])
+        .setup(|app| {
+            voice::start(app.handle().clone());
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

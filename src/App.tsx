@@ -40,13 +40,15 @@ function App() {
     setPinned(pinned.filter((p) => p.image.id !== id));
   }
 
-  async function search() {
-    if (!query.trim()) return;
+  async function search(text = query) {
+    if (!text.trim()) return;
     setStatus("Searching...");
     setResults([]);
     try {
       // The Rust side calls Unsplash and Pixabay (10 each) and alternates them
-      const data = await invoke<SearchResponse>("search_images", { query });
+      const data = await invoke<SearchResponse>("search_images", {
+        query: text,
+      });
       setResults(data.results);
       setStatus(
         data.errors.join(" · ") ||
@@ -65,6 +67,11 @@ function App() {
         query.trim()
           ? search()
           : document.getElementById("search-input")?.focus(),
+      // Spoken as "search red apples"
+      dictate: (words) => {
+        setQuery(words);
+        search(words);
+      },
     },
     {
       label: "View",
