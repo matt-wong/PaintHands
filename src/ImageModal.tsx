@@ -26,19 +26,34 @@ type Props = {
   onPin: (pin: PinnedImage) => void;
   onUnpin: () => void;
   onClose: () => void;
+  // Set when viewing a pinned image, to step through the pinned collection
+  onPrevious?: () => void;
+  onNext?: () => void;
 };
 
-function ImageModal({ image, pinned, onPin, onUnpin, onClose }: Props) {
+function ImageModal({
+  image,
+  pinned,
+  onPin,
+  onUnpin,
+  onClose,
+  onPrevious,
+  onNext,
+}: Props) {
   const [adjust, setAdjust] = useState<Adjustments>(pinned?.adjust ?? DEFAULTS);
   const [flipped, setFlipped] = useState(pinned?.flipped ?? false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      // Arrow keys belong to a slider while one is focused
+      if (e.target instanceof HTMLInputElement) return;
+      if (e.key === "ArrowLeft") onPrevious?.();
+      if (e.key === "ArrowRight") onNext?.();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, onPrevious, onNext]);
 
   // Voice phrases available while editing
   const commands: VoiceCommand[] = [
@@ -49,6 +64,12 @@ function ImageModal({ image, pinned, onPin, onUnpin, onClose }: Props) {
         setAdjust({ ...adjust, saturation: [-100, 0, 100][choice] }),
     },
     { label: "Flip", run: () => setFlipped(!flipped) },
+    ...(onPrevious && onNext
+      ? [
+          { label: "Previous", run: onPrevious },
+          { label: "Next", run: onNext },
+        ]
+      : []),
     ...(pinned ? [{ label: "Unpin", run: onUnpin }] : []),
     {
       label: "Pin",
@@ -62,6 +83,19 @@ function ImageModal({ image, pinned, onPin, onUnpin, onClose }: Props) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
+      {onPrevious && (
+        <button
+          type="button"
+          className="modal-arrow"
+          aria-label="Previous pinned image"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPrevious();
+          }}
+        >
+          ‹
+        </button>
+      )}
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <AdjustedImage
           src={image.url}
@@ -117,6 +151,19 @@ function ImageModal({ image, pinned, onPin, onUnpin, onClose }: Props) {
           </button>
         </aside>
       </div>
+      {onNext && (
+        <button
+          type="button"
+          className="modal-arrow"
+          aria-label="Next pinned image"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+        >
+          ›
+        </button>
+      )}
       <VoiceBar commands={commands} />
     </div>
   );

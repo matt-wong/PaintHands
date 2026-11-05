@@ -59,6 +59,16 @@ function App() {
     }
   }
 
+  // Steps through the pinned collection from the open image, wrapping at the ends
+  const pinnedIndex = selected
+    ? pinned.findIndex((p) => p.image.id === selected.id)
+    : -1;
+  function showPinned(step: number) {
+    const next = (pinnedIndex + step + pinned.length) % pinned.length;
+    setSelected(pinned[next].image);
+  }
+  const canStep = pinnedIndex >= 0 && pinned.length > 1;
+
   // Voice phrases available on the main screen; Pin and Edit only with results showing
   const commands: VoiceCommand[] = [
     {
@@ -161,6 +171,8 @@ function App() {
           onPin={pin}
           onUnpin={() => unpin(selected.id)}
           onClose={() => setSelected(null)}
+          onPrevious={canStep ? () => showPinned(-1) : undefined}
+          onNext={canStep ? () => showPinned(1) : undefined}
         />
       )}
     </main>

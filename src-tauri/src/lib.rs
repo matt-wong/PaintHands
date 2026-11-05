@@ -2,6 +2,7 @@ mod voice;
 
 use serde::Serialize;
 use serde_json::Value;
+use tauri::Manager;
 
 #[derive(Serialize)]
 struct ImageResult {
@@ -144,6 +145,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![search_images])
         .setup(|app| {
+            // The installed app can't see the project folder, so it keeps its own
+            // copy of .env in its config folder (put there by scripts/install-app.sh)
+            if let Ok(dir) = app.path().app_config_dir() {
+                dotenvy::from_path(dir.join(".env")).ok();
+            }
             voice::start(app.handle().clone());
             Ok(())
         })

@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "setup:voice": "sh scripts/setup-voice.sh"
+    "setup:voice": "sh scripts/setup-voice.sh",
+    "install:app": "sh scripts/install-app.sh"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

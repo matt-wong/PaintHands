@@ -29,7 +29,9 @@
       "vosk/model": "vosk/model"
     },
     "macOS": {
-      "frameworks": ["vosk/libvosk.dylib"]
+      "frameworks": ["vosk/libvosk.dylib"],
+      "signingIdentity": "-",
+      "hardenedRuntime": false
     },
     "icon": [
       "icons/32x32.png",
