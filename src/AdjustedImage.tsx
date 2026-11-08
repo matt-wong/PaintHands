@@ -6,10 +6,12 @@ type Props = {
   alt: string;
   adjust: Adjustments;
   flipped: boolean;
+  // Called once the image has finished loading, or has failed to load
+  onLoad?: () => void;
 };
 
 // Shows an image with its alterations applied, without changing the image
-function AdjustedImage({ src, alt, adjust, flipped }: Props) {
+function AdjustedImage({ src, alt, adjust, flipped, onLoad }: Props) {
   // Each image needs its own temperature filter, so each gets a unique id
   const filterId = `temperature-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 
@@ -38,6 +40,9 @@ function AdjustedImage({ src, alt, adjust, flipped }: Props) {
         src={src}
         alt={alt}
         loading="lazy"
+        onLoad={onLoad}
+        // A failed image counts too, so nothing waits on it forever
+        onError={onLoad}
         style={{ filter, transform: flipped ? "scaleX(-1)" : undefined }}
       />
     </>

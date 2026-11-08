@@ -42,6 +42,7 @@ function ImageModal({
 }: Props) {
   const [adjust, setAdjust] = useState<Adjustments>(pinned?.adjust ?? DEFAULTS);
   const [flipped, setFlipped] = useState(pinned?.flipped ?? false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -97,12 +98,19 @@ function ImageModal({
         </button>
       )}
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <AdjustedImage
-          src={image.url}
-          alt={image.title}
-          adjust={adjust}
-          flipped={flipped}
-        />
+        {/* A spinner holds the image's place until the full-size image arrives */}
+        <div className={loaded ? "modal-image" : "modal-image loading"}>
+          <AdjustedImage
+            src={image.url}
+            alt={image.title}
+            adjust={adjust}
+            flipped={flipped}
+            onLoad={() => setLoaded(true)}
+          />
+          {!loaded && (
+            <div className="spinner" role="status" aria-label="Loading image" />
+          )}
+        </div>
 
         <aside className="controls">
           {SLIDERS.map(({ key, label, min, max }) => (
