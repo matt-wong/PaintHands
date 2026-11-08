@@ -27,6 +27,7 @@
 .row {
   display: flex;
   justify-content: center;
+  gap: 5px;
 }
 
 a {
@@ -72,10 +73,6 @@ button:active {
 input,
 button {
   outline: none;
-}
-
-#search-input {
-  margin-right: 5px;
 }
 
 .results {

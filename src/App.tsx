@@ -40,8 +40,13 @@ function App() {
     setPinned(pinned.filter((p) => p.image.id !== id));
   }
 
-  async function search(text = query) {
+  function search(text = query) {
     if (!text.trim()) return;
+    loadImages(text);
+  }
+
+  // Without a search term, the Rust side sends random images
+  async function loadImages(text?: string) {
     setStatus("Searching...");
     setResults([]);
     try {
@@ -123,6 +128,9 @@ function App() {
           placeholder="Search images..."
         />
         <button type="submit">Search</button>
+        <button type="button" onClick={() => loadImages()}>
+          Random
+        </button>
       </form>
       <p>{status}</p>
 

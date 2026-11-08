@@ -2,6 +2,7 @@ mod voice;
 
 use serde::Serialize;
 use serde_json::Value;
+use std::hash::{BuildHasher, RandomState};
 use tauri::Manager;
 
 #[derive(Serialize)]
@@ -51,15 +52,32 @@ async fn fetch_json(
     res.json().await.map_err(|e| e.to_string())
 }
 
-async fn search_unsplash(query: String) -> Result<Vec<ImageResult>, String> {
+// With no search term, asks for random photos instead
+async fn unsplash(query: Option<String>) -> Result<Vec<ImageResult>, String> {
     let key = api_key("UNSPLASH_ACCESS_KEY")?;
-    let data = fetch_json(
-        "https://api.unsplash.com/search/photos",
-        &[("query", &query), ("per_page", "10")],
-        Some(format!("Client-ID {key}")),
-    )
-    .await?;
-    let photos = data["results"].as_array().cloned().unwrap_or_default();
+    let auth = Some(format!("Client-ID {key}"));
+    let photos = match query {
+        Some(query) => {
+            let data = fetch_json(
+                "https://api.unsplash.com/search/photos",
+                &[("query", &query), ("per_page", "10")],
+                auth,
+            )
+            .await?;
+            // Search wraps the photos in a "results" field
+            data["results"].clone()
+        }
+        // Random sends back just the list of photos
+        None => {
+            fetch_json(
+                "https://api.unsplash.com/photos/random",
+                &[("count", "10")],
+                auth,
+            )
+            .await?
+        }
+    };
+    let photos = photos.as_array().cloned().unwrap_or_default();
     Ok(photos
         .iter()
         .map(|photo| ImageResult {
@@ -74,14 +92,21 @@ async fn search_unsplash(query: String) -> Result<Vec<ImageResult>, String> {
         .collect())
 }
 
-async fn search_pixabay(query: String) -> Result<Vec<ImageResult>, String> {
+// Pixabay has no random option. With no search term it lists its most popular
+// images, up to 500 (50 pages of 10), so random picks one of those pages.
+async fn pixabay(query: Option<String>) -> Result<Vec<ImageResult>, String> {
     let key = api_key("PIXABAY_API_KEY")?;
+    let (filter, value) = match query {
+        Some(query) => ("q", query),
+        // Rust has no built-in random function, but its hash seeds are random
+        None => ("page", (RandomState::new().hash_one(()) % 50 + 1).to_string()),
+    };
     // Pixabay takes its key as a URL parameter rather than a header
     let data = fetch_json(
         "https://pixabay.com/api/",
         &[
             ("key", &key),
-            ("q", &query),
+            (filter, &value),
             ("image_type", "photo"),
             ("per_page", "10"),
         ],
@@ -103,12 +128,13 @@ async fn search_pixabay(query: String) -> Result<Vec<ImageResult>, String> {
         .collect())
 }
 
+// With no search term, shows random images instead
 #[tauri::command]
-async fn search_images(query: String) -> SearchResponse {
-    // Run both searches at the same time
+async fn search_images(query: Option<String>) -> SearchResponse {
+    // Ask both sites at the same time
     let searches = [
-        ("Unsplash", tauri::async_runtime::spawn(search_unsplash(query.clone()))),
-        ("Pixabay", tauri::async_runtime::spawn(search_pixabay(query))),
+        ("Unsplash", tauri::async_runtime::spawn(unsplash(query.clone()))),
+        ("Pixabay", tauri::async_runtime::spawn(pixabay(query))),
     ];
 
     let mut lists = Vec::new();
