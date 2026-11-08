@@ -26,7 +26,7 @@ type Props = {
   onPin: (pin: PinnedImage) => void;
   onUnpin: () => void;
   onClose: () => void;
-  // Set when viewing a pinned image, to step through the pinned collection
+  // Set when there's another image to step to (pinned images, then results)
   onPrevious?: () => void;
   onNext?: () => void;
 };
@@ -87,7 +87,7 @@ function ImageModal({
         <button
           type="button"
           className="modal-arrow"
-          aria-label="Previous pinned image"
+          aria-label="Previous image"
           onClick={(e) => {
             e.stopPropagation();
             onPrevious();
@@ -155,7 +155,7 @@ function ImageModal({
         <button
           type="button"
           className="modal-arrow"
-          aria-label="Next pinned image"
+          aria-label="Next image"
           onClick={(e) => {
             e.stopPropagation();
             onNext();

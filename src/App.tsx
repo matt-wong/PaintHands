@@ -15,11 +15,14 @@ function loadPinned(): PinnedImage[] {
   }
 }
 
+// The open image, and which section it was opened from (an image can be in both)
+type Selection = { image: ImageResult; from: "pinned" | "results" };
+
 function App() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ImageResult[]>([]);
   const [status, setStatus] = useState("");
-  const [selected, setSelected] = useState<ImageResult | null>(null);
+  const [selected, setSelected] = useState<Selection | null>(null);
   const [pinned, setPinned] = useState<PinnedImage[]>(loadPinned);
 
   // Keep the pinned collection between runs of the app
@@ -64,15 +67,22 @@ function App() {
     }
   }
 
-  // Steps through the pinned collection from the open image, wrapping at the ends
-  const pinnedIndex = selected
-    ? pinned.findIndex((p) => p.image.id === selected.id)
+  // Previous/Next step through the pinned images, then the results, wrapping at
+  // the ends. An image that's in both is visited in both places.
+  const sequence: Selection[] = [
+    ...pinned.map((p) => ({ image: p.image, from: "pinned" as const })),
+    ...results.map((image) => ({ image, from: "results" as const })),
+  ];
+  const selectedIndex = selected
+    ? sequence.findIndex(
+        (s) => s.from === selected.from && s.image.id === selected.image.id,
+      )
     : -1;
-  function showPinned(step: number) {
-    const next = (pinnedIndex + step + pinned.length) % pinned.length;
-    setSelected(pinned[next].image);
+  function step(by: number) {
+    const next = (selectedIndex + by + sequence.length) % sequence.length;
+    setSelected(sequence[next]);
   }
-  const canStep = pinnedIndex >= 0 && pinned.length > 1;
+  const canStep = selectedIndex >= 0 && sequence.length > 1;
 
   // Voice phrases available on the main screen; Pin and Edit only with results showing
   const commands: VoiceCommand[] = [
@@ -91,7 +101,8 @@ function App() {
     {
       label: "View",
       options: numbers(pinned.length),
-      run: (choice) => setSelected(pinned[choice].image),
+      run: (choice) =>
+        setSelected({ image: pinned[choice].image, from: "pinned" }),
     },
     ...(results.length > 0
       ? [
@@ -104,7 +115,8 @@ function App() {
           {
             label: "Edit",
             options: numbers(results.length),
-            run: (choice: number) => setSelected(results[choice]),
+            run: (choice: number) =>
+              setSelected({ image: results[choice], from: "results" }),
           },
         ]
       : []),
@@ -141,7 +153,7 @@ function App() {
             {pinned.map(({ image, adjust, flipped }, index) => (
               <div key={image.id}>
                 <span>{index + 1}</span>
-                <figure onClick={() => setSelected(image)}>
+                <figure onClick={() => setSelected({ image, from: "pinned" })}>
                   <AdjustedImage
                     src={image.thumbnail}
                     alt={image.title}
@@ -161,7 +173,9 @@ function App() {
         {results.map((img, index) => (
           <div key={img.id}>
           <span>{index + 1}</span>
-          <figure onClick={() => setSelected(img)}>
+          <figure
+            onClick={() => setSelected({ image: img, from: "results" })}
+          >
             <img src={img.thumbnail} alt={img.title} loading="lazy" />
             <footer>{img.source}</footer>
           </figure>
@@ -173,14 +187,14 @@ function App() {
 
       {selected && (
         <ImageModal
-          key={selected.id}
-          image={selected}
-          pinned={pinned.find((p) => p.image.id === selected.id)}
+          key={selected.image.id}
+          image={selected.image}
+          pinned={pinned.find((p) => p.image.id === selected.image.id)}
           onPin={pin}
-          onUnpin={() => unpin(selected.id)}
+          onUnpin={() => unpin(selected.image.id)}
           onClose={() => setSelected(null)}
-          onPrevious={canStep ? () => showPinned(-1) : undefined}
-          onNext={canStep ? () => showPinned(1) : undefined}
+          onPrevious={canStep ? () => step(-1) : undefined}
+          onNext={canStep ? () => step(1) : undefined}
         />
       )}
     </main>
